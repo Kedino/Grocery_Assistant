@@ -20,7 +20,6 @@ class GroceryAssistant():
                 ingredient = Ingredient(usage.name, usage.unit)
                 self.all_ingredients.add(ingredient)
 
-
     def main_menu(self):
         while True:
             print("\n--- Recipe Assistant ---")

@@ -6,6 +6,7 @@ dist/
 wheels/
 *.egg-info
 shopping_list.txt
+recipes.json
 
 # Virtual environments
 .venv
