@@ -4,6 +4,7 @@ The aim of this project is to convince my wife that coding can have useful appli
 The program generates both a recipe list json file and a shopping list txt file so data can persist through sessions and for easy printing. 
 
 Other than importing os and json, it has no dependencies, and runs on python version 3.12 or greater. 
+Create environment with uv and run with "uv run main.py"
 
 
 Future improvements: 
