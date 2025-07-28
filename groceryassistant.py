@@ -1,4 +1,4 @@
-from recipe import Recipe
+from recipe import Recipe, IngredientUsage
 from ingredient import Ingredient
 from shopping_list import ShoppingList
 from recipe_list import RECIPE_MAP
@@ -7,13 +7,19 @@ class GroceryAssistant():
     def __init__(self):
         self.all_recipes = {}
         self.shopping_list = ShoppingList()
+        self.all_ingredients = []
         for name, ing_list in RECIPE_MAP.items():
             self.all_recipes[name] = Recipe.from_dict(name, ing_list)
+        for recipe in self.all_recipes.values():
+            for usage in recipe.get_ingredients():
+                ingredient = Ingredient(usage.name, usage.unit)
+                if ingredient not in self.all_ingredients:
+                    self.all_ingredients.append(ingredient)
 
     def main_menu(self):
         while True:
             print("\n--- Recipe Assistant ---")
-            print("1. Add Recipe")
+            print("1. Create New Recipe")
             print("2. Select Recipes for Shopping List")
             print("3. View Shopping List")
             print("4. Exit")
@@ -33,30 +39,30 @@ class GroceryAssistant():
                 print("Invalid input. Please enter a number from 1 to 4.")
 
     def add_recipe(self):
-        print("Adding new recipe...")
+        print("Creating new recipe...")
         print("Please add the recipe name")
         name = input("Recipe Name: ").strip()
-        ingredients = []
+        usages = []
         while True:
             print(f"Adding recipe for {name}...")    
             print("Now add the ingredients for the recipe.")
-            print("1. New ingredient")
+            print("1. Add ingredient")
             print("2. Show all ingredients")
             print("3. Finish adding ingredients")
             print("4. Cancel adding recipe")
             choice = input("Enter your choice [1-4]: ").strip()
         
             if choice == "1":
-                self.add_ingredient(ingredients)
+                self.add_ingredient(usages)
             elif choice == "2":
                 print("Current ingredients:")
-                for ing in ingredients:
-                    print(f"- {ing.name}: {ing.quantity} {ing.unit}")
+                for ing in usages:
+                    print(f"- {ing.name.title()}: {ing.quantity} {ing.unit}")
             elif choice == "3":
-                if len(ingredients) == 0:
+                if len(usages) == 0:
                     print("No ingredients added. Please add at least one ingredient.")
                 else:
-                    recipe = Recipe(name, ingredients)
+                    recipe = Recipe(name, usages)
                     self.all_recipes[name] = recipe
                     print(f"Recipe '{name}' added successfully!")
                     break
@@ -66,19 +72,70 @@ class GroceryAssistant():
             else:
                 print("Invalid input. Please enter a number from 1 to 4.")
 
-    def add_ingredient(self, ingredients):
-        print("Adding new ingredient...")
-        name = input("Ingredient Name: ").strip()
-        quantity = input("Quantity: ").strip()
-        unit = input("Unit (e.g., grams, cups): ").strip()
-        
-        if name and quantity and unit:
-            ingredient = Ingredient(name, quantity, unit)
-            ingredients.append(ingredient)
-            print(f"Ingredient '{name}' added successfully!")
-        else:
-            print("Invalid ingredient details. Please try again.")
+    
+    def add_ingredient(self, usages):
+        matches = []
+        while True:
+            if matches:
+                print("Matching ingredients:")
+                for i, ing in enumerate(matches, start=1):
+                    print(f"{i}. {ing.name.title()} ({ing.unit})")
+                print("Select an ingredient by number, or search again (or 0 to create new): ")
+            else:
+                print("Enter ingredient name to search (or 0 to create new): ")
+            choice = input("> ").strip()
+            if choice == "0":
+                return self.create_new_ingredient(usages)
+            if matches and choice.isdigit():
+                choice = int(choice)
+                if 1 <= choice <= len(matches):
+                    ingredient = matches[choice - 1]
+                    quantity = self.prompt_for_quantity()
+                    usage = IngredientUsage(ingredient, quantity)
+                    usages.append(usage)
+                    print(f"Added {quantity} {ingredient.unit} of {ingredient.name.title()} to the recipe.")
+                    return
+                else:
+                    print("Invalid choice. Please select a valid ingredient number, search again, or select 0 to create new ingredient.")
+            elif choice == "":
+                print("Search term cannot be empty. Please try again.")
+            else:
+                matches = self.find_ingredient(choice)
+                if not matches:
+                    print("No matching ingredients found.")
+    
 
+
+
+
+
+    def find_ingredient(self, search_term):
+        search_term = search_term.lower()
+        matches = []
+        for ing in self.all_ingredients:
+            if search_term in ing.name.lower():
+                matches.append(ing)
+        return matches
+
+    def create_new_ingredient(self, usages):
+        name = input("Enter new ingredient name: ").strip()
+        unit = input("Enter unit (e.g., grams, cups): ").strip()
+        ingredient = Ingredient.create_ingredient(name, unit)
+        if ingredient not in self.all_ingredients:
+            self.all_ingredients.append(ingredient)
+        quantity = self.prompt_for_quantity()
+        usage = IngredientUsage(ingredient, quantity)
+        usages.append(usage)
+        print(f"Added {quantity} {ingredient.unit} of {ingredient.name.title()} to the recipe.")        
+
+    def prompt_for_quantity(self):
+        while True:
+            quantity_input = input("Enter quantity: ").strip()
+            try:
+                quantity = float(quantity_input)
+                return quantity
+            except ValueError:
+                print("Please enter a valid number for quantity.")
 
 
     def select_recipes(self):
@@ -117,7 +174,7 @@ class GroceryAssistant():
         print("\nCombined ingredients for all recipes:")
         combined_ingredients, unit_mismatches = self.shopping_list.get_combined_ingredients()
         for ingredient in combined_ingredients.values():
-            print(f"- {ingredient.name}: {ingredient.quantity} {ingredient.unit}")
+            print(f"- {ingredient.name.title()}: {ingredient.quantity} {ingredient.unit}")
         if unit_mismatches:
             print("\nNotice: Unit mismatches found:")
             for name, mismatches in unit_mismatches.items():
