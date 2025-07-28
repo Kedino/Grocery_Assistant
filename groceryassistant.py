@@ -19,11 +19,7 @@ class GroceryAssistant():
             for usage in recipe.get_ingredients():
                 ingredient = Ingredient(usage.name, usage.unit)
                 self.all_ingredients.add(ingredient)
-        self.all_ingredients = list(self.all_ingredients)
 
-        print("All ingredients stored:")
-        for i, ing in enumerate(self.all_ingredients, 1):
-            print(f"{i}. {ing.name} ({ing.unit})")
 
     def main_menu(self):
         while True:
@@ -138,7 +134,7 @@ class GroceryAssistant():
         unit = input("Enter unit (e.g., grams, cups): ").strip()
         ingredient = Ingredient.create_ingredient(name, unit)
         if ingredient not in self.all_ingredients:
-            self.all_ingredients.append(ingredient)
+            self.all_ingredients.add(ingredient)
         quantity = self.prompt_for_quantity()
         usage = IngredientUsage(ingredient, quantity)
         usages.append(usage)
