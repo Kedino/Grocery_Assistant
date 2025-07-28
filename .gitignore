@@ -5,6 +5,7 @@ build/
 dist/
 wheels/
 *.egg-info
+shopping_list.txt
 
 # Virtual environments
 .venv

@@ -1,3 +1,4 @@
+import json
 from recipe import Recipe, IngredientUsage
 from ingredient import Ingredient
 from shopping_list import ShoppingList
@@ -37,6 +38,8 @@ class GroceryAssistant():
             elif choice == "3":
                 self.view_shopping_list()
             elif choice == "4":
+                if self.shopping_list.recipes:
+                    self.save_shopping_list_to_file()
                 print("\nGoodbye!")
                 break
             else:
@@ -190,8 +193,25 @@ class GroceryAssistant():
                     print(f"  - {quantity} {unit}")
 
 
-    def _normalize_word(word):
+    def _normalize_word(self, word):
         word = word.strip().lower()
         if word.endswith("s") and len(word) > 1:
             word = word[:-1]
         return word
+    
+
+    
+
+    def save_shopping_list_to_file(self, filename="shopping_list.txt"):
+        combined_ingredients, unit_mismatches = self.shopping_list.get_combined_ingredients()
+        with open(filename, "w") as f:
+            f.write("Shopping List:\n\n")
+            for ing in combined_ingredients.values():
+                f.write(f"- {ing.name.title()}: {ing.quantity} {ing.unit}\n")
+            if unit_mismatches:
+                f.write("\nNotice: Unit mismatches found:\n")
+                for name, mismatches in unit_mismatches.items():
+                    f.write(f"{name.title()} was present in different units:\n")
+                    for quantity, unit in mismatches:
+                        f.write(f"  - {quantity} {unit}\n")
+        print(f"\n--- Shopping list saved to {filename} ---")
