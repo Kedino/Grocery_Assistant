@@ -1,3 +1,4 @@
+import os
 import json
 from recipe import Recipe, IngredientUsage
 from ingredient import Ingredient
@@ -9,7 +10,10 @@ class GroceryAssistant():
         self.all_recipes = {}
         self.shopping_list = ShoppingList()
         self.all_ingredients = set()
-        for name, ing_list in RECIPE_MAP.items():
+        recipe_data = self.load_recipes_from_file()
+        if not recipe_data:
+            recipe_data = RECIPE_MAP
+        for name, ing_list in recipe_data.items():
             self.all_recipes[name] = Recipe.from_dict(name, ing_list)
         for recipe in self.all_recipes.values():
             for usage in recipe.get_ingredients():
@@ -40,6 +44,7 @@ class GroceryAssistant():
             elif choice == "4":
                 if self.shopping_list.recipes:
                     self.save_shopping_list_to_file()
+                self.save_recipes_to_file(self.all_recipes)
                 print("\nGoodbye!")
                 break
             else:
@@ -74,6 +79,7 @@ class GroceryAssistant():
                 else:
                     recipe = Recipe(name, usages)
                     self.all_recipes[name] = recipe
+                    self.save_recipes_to_file(self.all_recipes)
                     print(f"\nRecipe '{name}' added successfully!")
                     break
             elif choice == "4":
@@ -199,8 +205,20 @@ class GroceryAssistant():
             word = word[:-1]
         return word
     
+    def save_recipes_to_file(self, all_recipes, filename="recipes.json"):
+        data = {}
+        for name, recipe in all_recipes.items():
+            data[name] = [usage.as_dict() for usage in recipe.get_ingredients()]
+        with open(filename, "w") as f:
+            json.dump(data, f, indent=4)
 
-    
+    def load_recipes_from_file(self, filename="recipes.json"):
+        if os.path.exists(filename):
+            with open(filename, "r") as f:
+                return json.load(f)
+        else:
+            return None
+
 
     def save_shopping_list_to_file(self, filename="shopping_list.txt"):
         combined_ingredients, unit_mismatches = self.shopping_list.get_combined_ingredients()
